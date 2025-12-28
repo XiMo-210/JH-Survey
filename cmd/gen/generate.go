@@ -12,7 +12,10 @@ import (
 )
 
 var tables = []string{
-	"user",
+	"admin",
+	"survey",
+	"result",
+	"stats",
 }
 
 func main() {
@@ -36,15 +39,22 @@ func main() {
 	g.WithDataTypeMap(m)
 
 	for _, table := range tables {
-		tableName := g.GenerateModel(
-			table,
+		opts := []gen.ModelOpt{
 			gen.FieldType("deleted_at", "soft_delete.DeletedAt"),
 			gen.FieldGORMTag("deleted_at", func(tag field.GormTag) field.GormTag {
 				return tag.Set("softDelete", "milli")
 			}),
 			gen.FieldJSONTag("deleted_at", "-"),
-		)
-		g.ApplyBasic(tableName)
+		}
+
+		var model any
+		if table == "stats" {
+			model = g.GenerateModelAs(table, "Stats", opts...)
+		} else {
+			model = g.GenerateModel(table, opts...)
+		}
+
+		g.ApplyBasic(model)
 	}
 
 	g.Execute()

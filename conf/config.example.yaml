@@ -1,6 +1,6 @@
 # 应用基础配置
 app:
-  name: "app" # 应用名称
+  name: "jh-survey" # 应用名称
   env: "dev" # 应用环境 dev|test|prod
 
 # HTTP 服务配置
@@ -43,12 +43,12 @@ db:
   password: "jh_pass"
   database: "jh_db"
 
-# # Redis 配置 开启前请在 register/boot.go 中进行 nedis.Boot()
-# redis:
-#   addrs:
-#     - "127.0.0.1:6379"
-#   db: 0
-#   password: "jh_pass"
+# Redis 配置
+redis:
+  addrs:
+    - "127.0.0.1:6379"
+  db: 0
+  password: "jh_pass"
 
 # 飞书告警配置
 feishu:

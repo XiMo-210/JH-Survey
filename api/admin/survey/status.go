@@ -12,6 +12,7 @@ import (
 	"github.com/zjutjh/mygo/swagger"
 
 	"app/comm"
+	"app/dao/cache"
 	"app/dao/repo"
 )
 
@@ -66,6 +67,11 @@ func (s *StatusApi) Run(ctx *gin.Context) kit.Code {
 	if _, err := repo.NewSurveyRepo().UpdateStatus(ctx, req.ID, req.Status); err != nil {
 		nlog.Pick().WithContext(ctx).WithError(err).Error("更新问卷状态失败")
 		return comm.CodeDatabaseError
+	}
+
+	// 删除问卷缓存
+	if err := cache.NewSurveyCache().Del(ctx, survey.Path); err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("删除问卷缓存失败")
 	}
 
 	return comm.CodeOK

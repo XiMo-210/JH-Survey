@@ -13,8 +13,8 @@ const TableNameResult = "result"
 // Result 答卷表
 type Result struct {
 	ID        int64     `gorm:"column:id;primaryKey;autoIncrement:true;comment:自增ID" json:"id"`                         // 自增ID
-	UserID    int64     `gorm:"column:user_id;not null;comment:用户ID 0-未登录用户" json:"user_id"`                            // 用户ID 0-未登录用户
 	SurveyID  int64     `gorm:"column:survey_id;not null;comment:问卷ID" json:"survey_id"`                                // 问卷ID
+	Username  string    `gorm:"column:username;not null;comment:用户名" json:"username"`                                   // 用户名
 	Data      string    `gorm:"column:data;not null;comment:答卷内容" json:"data"`                                          // 答卷内容
 	CreatedAt time.Time `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP(3);comment:创建时间" json:"created_at"` // 创建时间
 	UpdatedAt time.Time `gorm:"column:updated_at;not null;default:CURRENT_TIMESTAMP(3);comment:更新时间" json:"updated_at"` // 更新时间

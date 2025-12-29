@@ -28,8 +28,8 @@ func newResult(db *gorm.DB, opts ...gen.DOOption) result {
 	tableName := _result.resultDo.TableName()
 	_result.ALL = field.NewAsterisk(tableName)
 	_result.ID = field.NewInt64(tableName, "id")
-	_result.UserID = field.NewInt64(tableName, "user_id")
 	_result.SurveyID = field.NewInt64(tableName, "survey_id")
+	_result.Username = field.NewString(tableName, "username")
 	_result.Data = field.NewString(tableName, "data")
 	_result.CreatedAt = field.NewTime(tableName, "created_at")
 	_result.UpdatedAt = field.NewTime(tableName, "updated_at")
@@ -45,8 +45,8 @@ type result struct {
 
 	ALL       field.Asterisk
 	ID        field.Int64  // 自增ID
-	UserID    field.Int64  // 用户ID 0-未登录用户
 	SurveyID  field.Int64  // 问卷ID
+	Username  field.String // 用户名
 	Data      field.String // 答卷内容
 	CreatedAt field.Time   // 创建时间
 	UpdatedAt field.Time   // 更新时间
@@ -67,8 +67,8 @@ func (r result) As(alias string) *result {
 func (r *result) updateTableName(table string) *result {
 	r.ALL = field.NewAsterisk(table)
 	r.ID = field.NewInt64(table, "id")
-	r.UserID = field.NewInt64(table, "user_id")
 	r.SurveyID = field.NewInt64(table, "survey_id")
+	r.Username = field.NewString(table, "username")
 	r.Data = field.NewString(table, "data")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
@@ -98,8 +98,8 @@ func (r *result) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 func (r *result) fillFieldMap() {
 	r.fieldMap = make(map[string]field.Expr, 6)
 	r.fieldMap["id"] = r.ID
-	r.fieldMap["user_id"] = r.UserID
 	r.fieldMap["survey_id"] = r.SurveyID
+	r.fieldMap["username"] = r.Username
 	r.fieldMap["data"] = r.Data
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt

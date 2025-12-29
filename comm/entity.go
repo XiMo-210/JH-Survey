@@ -10,3 +10,8 @@ type AdminIdentity struct {
 	Username string    `json:"username" desc:"用户名"`
 	Type     AdminType `json:"type" desc:"用户类型"`
 }
+
+type ResultItem struct {
+	QuestionID string `json:"question_id" binding:"required" desc:"题目ID"`
+	Answer     string `json:"answer" desc:"回答"`
+}

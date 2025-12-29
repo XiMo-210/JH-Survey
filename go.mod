@@ -9,6 +9,7 @@ require (
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/samber/lo v1.52.0
+	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/cobra v1.10.1
 	github.com/zjutjh/mygo v1.6.5
 	golang.org/x/crypto v0.44.0

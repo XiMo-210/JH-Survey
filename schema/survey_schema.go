@@ -13,8 +13,8 @@ type BaseConf struct {
 	BeginTime       string          `json:"begin_time" binding:"required,datetime=2006-01-02 15:04:05" desc:"问卷有效期 开始时间"`
 	EndTime         string          `json:"end_time" binding:"required,datetime=2006-01-02 15:04:05" desc:"问卷有效期 结束时间"`
 	IsLoginRequired bool            `json:"is_login_required" desc:"是否需要登录"`
-	DailyLimit      int             `json:"daily_limit" binding:"gte=0" desc:"每日提交限制 is_login_required=true时生效"`
-	TotalLimit      int             `json:"total_limit" binding:"omitempty,gte=0,gtefield=DailyLimit" desc:"总提交限制 is_login_required=true时生效"`
+	DailyLimit      int64           `json:"daily_limit" binding:"gte=0" desc:"每日提交限制 is_login_required=true时生效"`
+	TotalLimit      int64           `json:"total_limit" binding:"omitempty,gte=0,gtefield=DailyLimit" desc:"总提交限制 is_login_required=true时生效"`
 	AllowedUserType []comm.UserType `json:"allowed_user_type" binding:"unique,dive,oneof=undergrad postgrad" desc:"允许提交的用户类型 is_login_required=true时生效"`
 }
 
@@ -61,8 +61,8 @@ type TextRange struct {
 }
 
 type NumberRange struct {
-	Min float64 `json:"min" desc:"最小值"`
-	Max float64 `json:"max" binding:"gtefield=Min" desc:"最大值"`
+	Min string `json:"min" desc:"最小值"`
+	Max string `json:"max" desc:"最大值"`
 }
 
 type Option struct {

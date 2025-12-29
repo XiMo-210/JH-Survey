@@ -4,10 +4,13 @@ import (
 	"errors"
 	"reflect"
 	"runtime"
+	"sort"
 
 	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/lo"
 	"github.com/zjutjh/mygo/foundation/reply"
+	"github.com/zjutjh/mygo/jwt"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/nlog"
 	"github.com/zjutjh/mygo/swagger"
@@ -107,20 +110,105 @@ func (d *DetailApi) Run(ctx *gin.Context) kit.Code {
 	}
 
 	// 问卷结构反序列化
-	var s schema.SurveySchema
-	if err := sonic.UnmarshalString(survey.Schema, &s); err != nil {
+	var surveySchema schema.SurveySchema
+	if err := sonic.UnmarshalString(survey.Schema, &surveySchema); err != nil {
 		nlog.Pick().WithContext(ctx).WithError(err).Error("问卷结构反序列化失败")
 		return comm.CodeDataParseError
 	}
 
-	// TODO: 查询统计数据
+	// 筛选需要显示统计数据的投票类题目
+	voteQuestions := lo.Filter(surveySchema.QuestionConf.Items, func(item schema.QuestionItem, _ int) bool {
+		return item.IsVoteType() && item.ShowStats
+	})
+
+	stats := make([]StatsItem, 0)
+
+	if len(voteQuestions) > 0 {
+		// 检查是否提交后才能查看数据
+		hasSubmitted := false
+		needSubmit := lo.ContainsBy(voteQuestions, func(item schema.QuestionItem) bool {
+			return item.ShowStatsAfterSubmit
+		})
+		if needSubmit {
+			user, err := jwt.GetIdentity[comm.UserIdentity](ctx)
+			if err == nil {
+				count, err := repo.NewResultRepo().CountByUser(ctx, survey.ID, user.Username, nil)
+				if err == nil && count > 0 {
+					hasSubmitted = true
+				}
+			}
+		}
+
+		// 筛选实际需要展示统计数据的题目
+		finalVoteQuestions := lo.Filter(voteQuestions, func(item schema.QuestionItem, _ int) bool {
+			return !item.ShowStatsAfterSubmit || (item.ShowStatsAfterSubmit && hasSubmitted)
+		})
+
+		if len(finalVoteQuestions) > 0 {
+			// 查询统计数据列表
+			statsList, err := repo.NewStatsRepo().FindListBySurveyID(ctx, survey.ID)
+			if err != nil {
+				nlog.Pick().WithContext(ctx).WithError(err).Error("查询统计数据列表失败")
+			}
+
+			// 构建统计数据映射 map[QuestionID][OptionID]Count
+			statsMap := make(map[string]map[string]int32)
+			for _, st := range statsList {
+				if _, ok := statsMap[st.QuestionID]; !ok {
+					statsMap[st.QuestionID] = make(map[string]int32)
+				}
+				statsMap[st.QuestionID][st.OptionID] = st.Count
+			}
+
+			// 构建统计数据
+			stats = lo.Map(finalVoteQuestions, func(item schema.QuestionItem, _ int) StatsItem {
+				options := make([]Option, 0, len(item.Options))
+
+				// 处理选项
+				for _, opt := range item.Options {
+					count := int32(0)
+					if optCountMap, ok := statsMap[item.ID]; ok {
+						count = optCountMap[opt.ID]
+					}
+					options = append(options, Option{
+						ID:    opt.ID,
+						Count: count,
+					})
+				}
+
+				// 计算排名
+				if item.ShowRank {
+					allCounts := lo.Map(options, func(o Option, _ int) int32 {
+						return o.Count
+					})
+					sort.Slice(allCounts, func(i, j int) bool {
+						return allCounts[i] > allCounts[j]
+					})
+					rankMap := make(map[int32]int32)
+					for i, c := range allCounts {
+						if _, ok := rankMap[c]; !ok {
+							rankMap[c] = int32(i + 1)
+						}
+					}
+					for i := range options {
+						options[i].Rank = rankMap[options[i].Count]
+					}
+				}
+
+				return StatsItem{
+					ID:      item.ID,
+					Options: options,
+				}
+			})
+		}
+	}
 
 	// 构建响应数据
 	d.Response = DetailApiResponse{
 		ID:     survey.ID,
 		Type:   comm.SurveyType(survey.Type),
-		Schema: s,
-		Stats:  []StatsItem{},
+		Schema: surveySchema,
+		Stats:  stats,
 	}
 
 	return comm.CodeOK

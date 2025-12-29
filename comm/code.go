@@ -31,4 +31,6 @@ var (
 	CodeAdminAlreadyExist  = kit.NewCode(30000, "管理员已存在")
 	CodeAdminNotExist      = kit.NewCode(30001, "管理员不存在")
 	CodeAdminPasswordError = kit.NewCode(30002, "管理员密码错误")
+	CodeSurveyTimeInvalid  = kit.NewCode(30003, "不在问卷有效期内")
+	CodeSurveySubmitLimit  = kit.NewCode(30004, "超出提交限制")
 )

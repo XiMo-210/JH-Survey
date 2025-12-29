@@ -26,12 +26,13 @@ CREATE TABLE `survey` (
 
 CREATE TABLE `result` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT COMMENT '自增ID',
-    `user_id` BIGINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '用户ID 0-未登录用户',
     `survey_id` BIGINT UNSIGNED NOT NULL COMMENT '问卷ID',
+    `username` VARCHAR(16) NOT NULL DEFAULT '' COMMENT '用户名',
     `data` JSON NOT NULL COMMENT '答卷内容',
     `created_at` TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     `updated_at` TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    INDEX `idx_survey_id_username_created_at` (`survey_id`, `username`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='答卷表';
 
 CREATE TABLE `stats` (

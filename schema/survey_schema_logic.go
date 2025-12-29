@@ -5,6 +5,9 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/samber/lo"
+	"github.com/shopspring/decimal"
+
 	"app/comm"
 )
 
@@ -18,6 +21,14 @@ func (s *SurveySchema) NormalizeAndVerify() error {
 	// QuestionConf
 	if err := s.QuestionConf.verifyAndFix(); err != nil {
 		return fmt.Errorf("question_conf error: %w", err)
+	}
+
+	// showStatsAfterSubmit 要求 is_login_required 为 true
+	showStatsAfterSubmit := lo.ContainsBy(s.QuestionConf.Items, func(item QuestionItem) bool {
+		return item.ShowStatsAfterSubmit
+	})
+	if showStatsAfterSubmit && !s.BaseConf.IsLoginRequired {
+		return fmt.Errorf("show_stats_after_submit requires is_login_required to be true")
 	}
 
 	return nil
@@ -77,6 +88,18 @@ func (item *QuestionItem) verifyAndFix() error {
 		}
 		if item.Valid != "n" {
 			item.NumberRange = nil
+		} else {
+			minVal, err := decimal.NewFromString(item.NumberRange.Min)
+			if err != nil {
+				return fmt.Errorf("invalid number range min: %w", err)
+			}
+			maxVal, err := decimal.NewFromString(item.NumberRange.Max)
+			if err != nil {
+				return fmt.Errorf("invalid number range max: %w", err)
+			}
+			if maxVal.LessThan(minVal) {
+				return fmt.Errorf("number range max cannot be less than min")
+			}
 		}
 	}
 

@@ -68,7 +68,7 @@ func (d *DeleteApi) Run(ctx *gin.Context) kit.Code {
 		return comm.CodeDatabaseError
 	}
 
-	// 删除缓存
+	// 删除问卷缓存
 	err = cache.NewSurveyCache().Del(ctx, survey.Path)
 	if err != nil {
 		nlog.Pick().WithContext(ctx).WithError(err).Error("删除问卷缓存失败")

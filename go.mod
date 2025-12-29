@@ -6,7 +6,8 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.10.1
-	github.com/zjutjh/mygo v1.6.3
+	github.com/zjutjh/mygo v1.6.5
+	golang.org/x/crypto v0.42.0
 	gorm.io/gen v0.3.26
 	gorm.io/gorm v1.31.0
 	gorm.io/plugin/dbresolver v1.6.2
@@ -34,6 +35,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
@@ -63,7 +65,6 @@ require (
 	go.uber.org/mock v0.5.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.42.0 // indirect
 	golang.org/x/mod v0.28.0 // indirect
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect

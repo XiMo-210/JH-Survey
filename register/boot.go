@@ -6,6 +6,7 @@ import (
 	"github.com/zjutjh/mygo/config"
 	"github.com/zjutjh/mygo/feishu"
 	"github.com/zjutjh/mygo/foundation/kernel"
+	"github.com/zjutjh/mygo/jwt"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/ndb"
 	"github.com/zjutjh/mygo/nedis"
@@ -27,6 +28,9 @@ func Boot() kernel.BootList {
 		ndb.Boot(),   // DB
 		nedis.Boot(), // Redis
 		nesty.Boot(), // HTTP Client
+
+		jwt.BootCustom[comm.UserIdentity]("jwt_user"),
+		jwt.BootCustom[comm.AdminIdentity]("jwt_admin"),
 
 		// 业务引导器
 		BizConfBoot(),

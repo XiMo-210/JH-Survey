@@ -27,4 +27,8 @@ var (
 )
 
 // 业务错误码 从 30000 开始
-var ()
+var (
+	CodeAdminAlreadyExist  = kit.NewCode(30000, "管理员已存在")
+	CodeAdminNotExist      = kit.NewCode(30001, "管理员不存在")
+	CodeAdminPasswordError = kit.NewCode(30002, "管理员密码错误")
+)

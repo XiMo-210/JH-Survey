@@ -13,6 +13,7 @@ http_server:
 
 # 业务私有配置
 biz:
+  admin_create_secret: "jh_secret" # 创建管理员密钥
 
 # 应用业务日志配置
 log:
@@ -55,3 +56,15 @@ feishu:
   enable: false
   notice_webhook: ""
   notice_secret: ""
+
+# 用户 JWT 配置
+jwt_user:
+  secret: "user_secret"
+  expiration: "72h"
+  issuer: "jh_survey"
+
+# 管理员 JWT 配置
+jwt_admin:
+  secret: "admin_secret"
+  expiration: "168h"
+  issuer: "jh_survey"

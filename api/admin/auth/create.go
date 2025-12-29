@@ -6,11 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/zjutjh/mygo/foundation/reply"
+	"github.com/zjutjh/mygo/jwt"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/nlog"
 	"github.com/zjutjh/mygo/swagger"
 
 	"app/comm"
+	"app/dao/model"
+	"app/dao/repo"
 )
 
 // CreateHandler API router注册点
@@ -38,7 +41,45 @@ type CreateApiResponse struct{}
 
 // Run Api业务逻辑执行点
 func (c *CreateApi) Run(ctx *gin.Context) kit.Code {
-	// TODO: 在此处编写接口业务逻辑
+	req := c.Request.Body
+
+	// 获取登录管理员信息
+	admin, err := jwt.GetIdentity[comm.AdminIdentity](ctx)
+	if err != nil || admin.Type != comm.AdminTypeSuper {
+		// 非超管登录 校验密钥
+		if req.Secret != comm.BizConf.AdminCreateSecret {
+			nlog.Pick().WithContext(ctx).Warn("创建管理员密钥错误")
+			return comm.CodePermissionDenied
+		}
+	}
+
+	// 查询用户名是否存在
+	record, err := repo.NewAdminRepo().FindByUsername(ctx, req.Username)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询管理员失败")
+		return comm.CodeDatabaseError
+	}
+	if record != nil {
+		return comm.CodeAdminAlreadyExist
+	}
+
+	// 密码加密
+	password, err := comm.HashPassword(req.Password)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("密码加密失败")
+		return comm.CodeUnknownError
+	}
+
+	// 创建管理员
+	if err := repo.NewAdminRepo().Create(ctx, &model.Admin{
+		Username: req.Username,
+		Password: password,
+		Type:     int8(comm.AdminTypeNormal),
+	}); err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("创建管理员失败")
+		return comm.CodeDatabaseError
+	}
+
 	return comm.CodeOK
 }
 

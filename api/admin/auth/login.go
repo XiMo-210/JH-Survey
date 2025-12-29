@@ -6,11 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/zjutjh/mygo/foundation/reply"
+	"github.com/zjutjh/mygo/jwt"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/nlog"
 	"github.com/zjutjh/mygo/swagger"
 
 	"app/comm"
+	"app/dao/repo"
 )
 
 // LoginHandler API router注册点
@@ -39,7 +41,34 @@ type LoginApiResponse struct {
 
 // Run Api业务逻辑执行点
 func (l *LoginApi) Run(ctx *gin.Context) kit.Code {
-	// TODO: 在此处编写接口业务逻辑
+	req := l.Request.Body
+
+	// 查询管理员信息
+	admin, err := repo.NewAdminRepo().FindByUsername(ctx, req.Username)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询管理员信息失败")
+		return comm.CodeDatabaseError
+	}
+	if admin == nil {
+		return comm.CodeAdminNotExist
+	}
+
+	// 校验密码
+	if err := comm.ComparePassword(admin.Password, req.Password); err != nil {
+		return comm.CodeAdminPasswordError
+	}
+
+	// 生成Token
+	token, err := jwt.Pick[comm.AdminIdentity]("jwt_admin").GenerateToken(comm.AdminIdentity{
+		Username: admin.Username,
+		Type:     comm.AdminType(admin.Type),
+	})
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("生成Token失败")
+		return comm.CodeUnknownError
+	}
+	l.Response.Token = token
+
 	return comm.CodeOK
 }
 

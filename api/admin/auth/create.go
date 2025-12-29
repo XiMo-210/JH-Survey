@@ -53,7 +53,7 @@ func (c *CreateApi) Run(ctx *gin.Context) kit.Code {
 		}
 	}
 
-	// 查询用户名是否存在
+	// 查询管理员
 	record, err := repo.NewAdminRepo().FindByUsername(ctx, req.Username)
 	if err != nil {
 		nlog.Pick().WithContext(ctx).WithError(err).Error("查询管理员失败")

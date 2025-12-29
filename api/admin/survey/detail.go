@@ -3,7 +3,9 @@ package survey
 import (
 	"reflect"
 	"runtime"
+	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zjutjh/mygo/foundation/reply"
 	"github.com/zjutjh/mygo/kit"
@@ -11,6 +13,7 @@ import (
 	"github.com/zjutjh/mygo/swagger"
 
 	"app/comm"
+	"app/dao/repo"
 	"app/schema"
 )
 
@@ -45,7 +48,36 @@ type DetailApiResponse struct {
 
 // Run Api业务逻辑执行点
 func (d *DetailApi) Run(ctx *gin.Context) kit.Code {
-	// TODO: 在此处编写接口业务逻辑
+	req := d.Request.Query
+
+	// 查询问卷
+	survey, err := repo.NewSurveyRepo().FindByID(ctx, req.ID)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询问卷失败")
+		return comm.CodeDatabaseError
+	}
+	if survey == nil {
+		return comm.CodeDataNotFound
+	}
+
+	// 问卷结构反序列化
+	var schema schema.SurveySchema
+	if err := sonic.UnmarshalString(survey.Schema, &schema); err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("问卷结构反序列化失败")
+		return comm.CodeDataParseError
+	}
+
+	// 构建响应数据
+	d.Response = DetailApiResponse{
+		ID:        survey.ID,
+		Type:      comm.SurveyType(survey.Type),
+		Path:      survey.Path,
+		Schema:    schema,
+		Status:    comm.SurveyStatus(survey.Status),
+		CreatedAt: survey.CreatedAt.Format(time.DateTime),
+		UpdatedAt: survey.UpdatedAt.Format(time.DateTime),
+	}
+
 	return comm.CodeOK
 }
 

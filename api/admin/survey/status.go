@@ -6,11 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/zjutjh/mygo/foundation/reply"
+	"github.com/zjutjh/mygo/jwt"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/nlog"
 	"github.com/zjutjh/mygo/swagger"
 
 	"app/comm"
+	"app/dao/repo"
 )
 
 // StatusHandler API router注册点
@@ -37,7 +39,35 @@ type StatusApiResponse struct{}
 
 // Run Api业务逻辑执行点
 func (s *StatusApi) Run(ctx *gin.Context) kit.Code {
-	// TODO: 在此处编写接口业务逻辑
+	req := s.Request.Body
+
+	// 获取登录管理员信息
+	admin, err := jwt.GetIdentity[comm.AdminIdentity](ctx)
+	if err != nil {
+		return comm.CodeNotLoggedIn
+	}
+
+	// 查询问卷
+	survey, err := repo.NewSurveyRepo().FindByID(ctx, req.ID)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询问卷失败")
+		return comm.CodeDatabaseError
+	}
+	if survey == nil {
+		return comm.CodeDataNotFound
+	}
+
+	// 权限校验
+	if survey.AdminID != admin.ID && admin.Type != comm.AdminTypeSuper {
+		return comm.CodePermissionDenied
+	}
+
+	// 更新问卷状态
+	if _, err := repo.NewSurveyRepo().UpdateStatus(ctx, req.ID, req.Status); err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("更新问卷状态失败")
+		return comm.CodeDatabaseError
+	}
+
 	return comm.CodeOK
 }
 

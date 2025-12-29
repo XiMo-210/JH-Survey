@@ -1,18 +1,26 @@
 package survey
 
 import (
+	"errors"
 	"reflect"
 	"runtime"
 
+	"github.com/bytedance/sonic"
 	"github.com/gin-gonic/gin"
 	"github.com/zjutjh/mygo/foundation/reply"
 	"github.com/zjutjh/mygo/kit"
 	"github.com/zjutjh/mygo/nlog"
 	"github.com/zjutjh/mygo/swagger"
+	"golang.org/x/sync/singleflight"
 
 	"app/comm"
+	"app/dao/cache"
+	"app/dao/model"
+	"app/dao/repo"
 	"app/schema"
 )
+
+var sf singleflight.Group
 
 // DetailHandler API router注册点
 func DetailHandler() gin.HandlerFunc {
@@ -53,7 +61,68 @@ type Option struct {
 
 // Run Api业务逻辑执行点
 func (d *DetailApi) Run(ctx *gin.Context) kit.Code {
-	// TODO: 在此处编写接口业务逻辑
+	req := d.Request.Query
+
+	// 查询问卷缓存
+	survey, err := cache.NewSurveyCache().Get(ctx, req.Path)
+	if err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询问卷缓存失败")
+	}
+	// 缓存未命中 回源数据库
+	if survey == nil {
+		// singleflight 防止缓存穿透
+		val, err, _ := sf.Do(req.Path, func() (any, error) {
+			// 数据库查询问卷
+			record, err := repo.NewSurveyRepo().FindByPath(ctx, req.Path)
+			if err != nil {
+				nlog.Pick().WithContext(ctx).WithError(err).Error("查询问卷失败")
+				return nil, err
+			}
+			if record == nil {
+				return nil, kit.ErrNotFound
+			}
+
+			// 设置问卷缓存
+			if err := cache.NewSurveyCache().Set(ctx, req.Path, record); err != nil {
+				nlog.Pick().WithContext(ctx).WithError(err).Error("设置问卷缓存失败")
+			}
+
+			return record, nil
+		})
+		if err != nil {
+			nlog.Pick().WithContext(ctx).WithError(err).Error("查询问卷失败")
+			if errors.Is(err, kit.ErrNotFound) {
+				return comm.CodeDataNotFound
+			}
+			return comm.CodeDatabaseError
+		}
+
+		// 断言类型
+		var ok bool
+		survey, ok = val.(*model.Survey)
+		if !ok {
+			nlog.Pick().WithContext(ctx).Error("singleflight 返回值类型断言失败")
+			return comm.CodeUnknownError
+		}
+	}
+
+	// 问卷结构反序列化
+	var s schema.SurveySchema
+	if err := sonic.UnmarshalString(survey.Schema, &s); err != nil {
+		nlog.Pick().WithContext(ctx).WithError(err).Error("问卷结构反序列化失败")
+		return comm.CodeDataParseError
+	}
+
+	// TODO: 查询统计数据
+
+	// 构建响应数据
+	d.Response = DetailApiResponse{
+		ID:     survey.ID,
+		Type:   comm.SurveyType(survey.Type),
+		Schema: s,
+		Stats:  []StatsItem{},
+	}
+
 	return comm.CodeOK
 }
 

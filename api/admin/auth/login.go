@@ -43,10 +43,10 @@ type LoginApiResponse struct {
 func (l *LoginApi) Run(ctx *gin.Context) kit.Code {
 	req := l.Request.Body
 
-	// 查询管理员信息
+	// 查询管理员
 	admin, err := repo.NewAdminRepo().FindByUsername(ctx, req.Username)
 	if err != nil {
-		nlog.Pick().WithContext(ctx).WithError(err).Error("查询管理员信息失败")
+		nlog.Pick().WithContext(ctx).WithError(err).Error("查询管理员失败")
 		return comm.CodeDatabaseError
 	}
 	if admin == nil {
@@ -58,13 +58,14 @@ func (l *LoginApi) Run(ctx *gin.Context) kit.Code {
 		return comm.CodeAdminPasswordError
 	}
 
-	// 生成Token
+	// 生成 Token
 	token, err := jwt.Pick[comm.AdminIdentity]("jwt_admin").GenerateToken(comm.AdminIdentity{
+		ID:       admin.ID,
 		Username: admin.Username,
 		Type:     comm.AdminType(admin.Type),
 	})
 	if err != nil {
-		nlog.Pick().WithContext(ctx).WithError(err).Error("生成Token失败")
+		nlog.Pick().WithContext(ctx).WithError(err).Error("生成 Token 失败")
 		return comm.CodeUnknownError
 	}
 	l.Response.Token = token

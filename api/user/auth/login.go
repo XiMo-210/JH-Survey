@@ -44,13 +44,13 @@ func (l *LoginApi) Run(ctx *gin.Context) kit.Code {
 
 	// TODO: 接入用户中心
 
-	// 生成Token
+	// 生成 Token
 	token, err := jwt.Pick[comm.UserIdentity]("jwt_user").GenerateToken(comm.UserIdentity{
 		Username: req.Username,
 		Type:     comm.UserTypeUndergrad,
 	})
 	if err != nil {
-		nlog.Pick().WithContext(ctx).WithError(err).Error("生成Token失败")
+		nlog.Pick().WithContext(ctx).WithError(err).Error("生成 Token 失败")
 		return comm.CodeUnknownError
 	}
 	l.Response.Token = token

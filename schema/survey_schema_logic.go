@@ -57,7 +57,7 @@ func (q *QuestionConf) verifyAndFix() error {
 }
 
 func (item *QuestionItem) verifyAndFix() error {
-	if !item.isInputType() {
+	if !item.IsInputType() {
 		item.Placeholder = ""
 		item.Valid = ""
 		item.TextRange = nil
@@ -80,7 +80,7 @@ func (item *QuestionItem) verifyAndFix() error {
 		}
 	}
 
-	if !item.isOptionType() {
+	if !item.IsOptionType() {
 		item.Options = nil
 		item.Layout = ""
 		item.MinNum = 0
@@ -89,7 +89,7 @@ func (item *QuestionItem) verifyAndFix() error {
 		item.ShowStatsAfterSubmit = false
 		item.ShowRank = false
 	} else {
-		if item.isCheckboxType() {
+		if item.IsCheckboxType() {
 			if len(item.Options) < item.MinNum {
 				return fmt.Errorf("min_num cannot be greater than the number of options")
 			}
@@ -101,7 +101,7 @@ func (item *QuestionItem) verifyAndFix() error {
 			item.MaxNum = 0
 		}
 
-		if !item.isVoteType() {
+		if !item.IsVoteType() {
 			item.ShowStats = false
 			item.ShowStatsAfterSubmit = false
 			item.ShowRank = false
@@ -132,7 +132,7 @@ func (item *QuestionItem) verifyAndFix() error {
 		}
 	}
 
-	if !item.isUploadType() {
+	if !item.IsUploadType() {
 		item.UploadType = ""
 		item.AllowedFileType = nil
 		item.MaxFileSize = 0
@@ -146,23 +146,36 @@ func (item *QuestionItem) verifyAndFix() error {
 	return nil
 }
 
-func (item *QuestionItem) isInputType() bool {
+func (item *QuestionItem) IsInputType() bool {
 	return item.Type == comm.QuestionTypeText || item.Type == comm.QuestionTypeTextArea
 }
 
-func (item *QuestionItem) isOptionType() bool {
+func (item *QuestionItem) IsOptionType() bool {
 	return item.Type == comm.QuestionTypeRadio || item.Type == comm.QuestionTypeCheckbox ||
 		item.Type == comm.QuestionTypeVoteRadio || item.Type == comm.QuestionTypeVoteCheckbox
 }
 
-func (item *QuestionItem) isVoteType() bool {
+func (item *QuestionItem) IsVoteType() bool {
 	return item.Type == comm.QuestionTypeVoteRadio || item.Type == comm.QuestionTypeVoteCheckbox
 }
 
-func (item *QuestionItem) isCheckboxType() bool {
+func (item *QuestionItem) IsCheckboxType() bool {
 	return item.Type == comm.QuestionTypeCheckbox || item.Type == comm.QuestionTypeVoteCheckbox
 }
 
-func (item *QuestionItem) isUploadType() bool {
+func (item *QuestionItem) IsUploadType() bool {
 	return item.Type == comm.QuestionTypeUpload
+}
+
+func (item *QuestionItem) GetCategory() string {
+	if item.IsInputType() {
+		return "input"
+	}
+	if item.IsOptionType() {
+		return "option"
+	}
+	if item.IsUploadType() {
+		return "upload"
+	}
+	return "unknown"
 }

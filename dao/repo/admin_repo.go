@@ -21,11 +21,6 @@ func NewAdminRepo() *AdminRepo {
 	}
 }
 
-func (r *AdminRepo) Create(ctx context.Context, record *model.Admin) error {
-	a := r.query.Admin
-	return a.WithContext(ctx).Create(record)
-}
-
 func (r *AdminRepo) FindByUsername(ctx context.Context, username string) (*model.Admin, error) {
 	a := r.query.Admin
 	record, err := a.WithContext(ctx).Where(a.Username.Eq(username)).First()
@@ -33,4 +28,14 @@ func (r *AdminRepo) FindByUsername(ctx context.Context, username string) (*model
 		return nil, nil
 	}
 	return record, err
+}
+
+func (r *AdminRepo) FindListByIDs(ctx context.Context, ids []int64) ([]*model.Admin, error) {
+	a := r.query.Admin
+	return a.WithContext(ctx).Where(a.ID.In(ids...)).Find()
+}
+
+func (r *AdminRepo) Create(ctx context.Context, record *model.Admin) error {
+	a := r.query.Admin
+	return a.WithContext(ctx).Create(record)
 }
